@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Arguments for customizing the simulation -->
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+  
+  <!-- Initial pose of the quadrotor -->
+  <arg name="x" default="0.0"/>
+  <arg name="y" default="0.0"/>
+  <arg name="z" default="0.3"/>
+  <arg name="roll" default="0.0"/>
+  <arg name="pitch" default="0.0"/>
+  <arg name="yaw" default="0.0"/>
+  <arg name="robot_name" default="hector_quadrotor"/>
+  
+  <!-- Launch Gazebo with an empty world -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find hector_gazebo_worlds)/worlds/empty.world"/>
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="headless" value="$(arg headless)"/>
+    <arg name="debug" value="$(arg debug)"/>
+  </include>
+  
+  <!-- Load the URDF model into the parameter server -->
+  <param name="robot_description" 
+         command="$(find xacro)/xacro '$(find hector_quadrotor_description)/urdf/quadrotor.gazebo.xacro'" />
+  
+  <!-- Spawn the quadrotor -->
+  <node name="spawn_quadrotor" pkg="gazebo_ros" type="spawn_model"
+        args="-param robot_description
+              -urdf
+              -x $(arg x)
+              -y $(arg y)
+              -z $(arg z)
+              -R $(arg roll)
+              -P $(arg pitch)
+              -Y $(arg yaw)
+              -model $(arg robot_name)"
+        respawn="false" output="screen"/>
+              
+  <!-- Load robot state publisher -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" 
+        respawn="false" output="screen">
+    <param name="publish_frequency" type="double" value="50.0" />
+  </node>
+</launch>
