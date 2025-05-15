@@ -1,19 +1,22 @@
 #!/usr/bin/python3
 
 import rospy
-from geometry_msgs.msg import Pose, WrenchStamped
-from sensor_msgs.msg import Imu
+from geometry_msgs.msg import Pose, Twist
 from nav_msgs.msg import Odometry
 from tf.transformations import euler_from_quaternion
-from hector_uav_msgs.msg import MotorCommand
+from hector_uav_msgs.srv import EnableMotors
 
 
 class DronePID:
     def __init__(self):
         rospy.init_node('pid_controller', anonymous=True)
 
+        rospy.wait_for_service('/enable_motors')
+        self.enable_motors = rospy.ServiceProxy('/enable_motors', EnableMotors)
+        self.enable_motors()
+
         self.odom_sub = rospy.Subscriber('/ground_truth/state', Odometry, self.odom_callback)
-        self.cmd_pub = rospy.Publisher('/command/wrench', WrenchStamped, queue_size=10)
+        self.cmd_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
 
         self.state = Pose()
         self.roll, self.pitch, self.yaw = 0.0, 0.0, 0.0
@@ -23,6 +26,8 @@ class DronePID:
         self.target_height = 10.0
         self.prev_height_error = 0.0
         self.height_error_integral = 0.0
+
+        self.command = Twist()
 
     def odom_callback(self, data):
         self.state.position = data.pose.pose.position
@@ -52,19 +57,9 @@ class DronePID:
         
         self.prev_height_error = height_error
 
-        command = WrenchStamped()
-        command.header.frame_id = 'base_link'
-        command.header.stamp = rospy.Time.now()
+        self.command.linear.z = thrust
 
-        command.wrench.force.z = thrust
-
-        command.wrench.force.x = 0.0
-        command.wrench.force.y = 0.0
-        command.wrench.torque.x = 0.0
-        command.wrench.torque.y = 0.0
-        command.wrench.torque.z = 0.0
-
-        self.cmd_pub.publish(command)
+        self.cmd_pub.publish(self.command)
 
 
 if __name__ == "__main__":
