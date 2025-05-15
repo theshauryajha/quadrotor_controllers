@@ -4,16 +4,11 @@ import rospy
 from geometry_msgs.msg import Pose, Twist
 from nav_msgs.msg import Odometry
 from tf.transformations import euler_from_quaternion
-from hector_uav_msgs.srv import EnableMotors
 
 
 class DronePID:
     def __init__(self):
         rospy.init_node('pid_controller', anonymous=True)
-
-        rospy.wait_for_service('/enable_motors')
-        self.enable_motors = rospy.ServiceProxy('/enable_motors', EnableMotors)
-        self.enable_motors()
 
         self.odom_sub = rospy.Subscriber('/ground_truth/state', Odometry, self.odom_callback)
         self.cmd_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
