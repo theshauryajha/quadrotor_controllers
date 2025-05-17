@@ -11,7 +11,7 @@ class DronePID:
         rospy.init_node('pid_controller', anonymous=True)
 
         self.odom_sub = rospy.Subscriber('/ground_truth/state', Odometry, self.odom_callback)
-        self.cmd_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+        self.cmd_pub = rospy.Publisher('/hector_quadrotor/cmd_vel', Twist, queue_size=10)
 
         self.state = Pose()
         self.roll, self.pitch, self.yaw = 0.0, 0.0, 0.0
